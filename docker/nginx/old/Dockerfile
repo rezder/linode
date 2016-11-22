@@ -11,14 +11,14 @@ MAINTAINER Rene
 
 # Install Nginx
 
-# Add application repository URL to the default sources
-RUN echo "deb http://archive.ubuntu.com/ubuntu/ raring main universe" >> /etc/apt/sources.list
-
 # Update the repository
 RUN apt-get update
 
 # Install necessary tools
-RUN apt-get install -y nano wget dialog net-tools
+RUN apt-get install -y nano wget dialog net-tools software-properties-common
+
+# Add application repository URL to the default sources
+RUN add-apt-repository ppa:nginx/stable
 
 # Download and Install Nginx
 RUN apt-get install -y nginx  

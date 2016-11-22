@@ -9,4 +9,4 @@ tar --append --file=battup.tar battserver
 mv battup.tar $MYDIR
 cd $MYDIR
 gzip battup.tar
-##scp rho@rezder.com:battup.tar.gz /updload/battleline
+##scp  battup.tar.gz rho@rezder.com:/home/rho/linode/docker/battleline

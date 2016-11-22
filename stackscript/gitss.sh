@@ -51,7 +51,7 @@ fi
 ln -sf /usr/share/zoneinfo/$TZ /etc/localtime
 
 # Set up an non-privileged user and sudo
-useradd -m -g users -G wheel $USERNAME
+useradd -m -G wheel -s /bin/bash $USERNAME
 passwd $USERNAME <<EOF
 $USERPASS
 $USERPASS
