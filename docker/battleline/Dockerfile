@@ -11,11 +11,8 @@ MAINTAINER Rene
 
 # Install Battleline
 
-# Update the repository
-RUN apt-get update
-
 # Install necessary tools
-RUN apt-get install -y nano wget dialog net-tools
+RUN apt-get update && apt-get install -y nano wget dialog net-tools
 
 # Copy a tar.gz file from the current directory
 # It is automaticly extracted by docker

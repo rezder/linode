@@ -6,17 +6,20 @@ MAINTAINER Rene
 
 # Install Nginx
 
-# Update the repository
-RUN apt-get update
-
 # Install necessary tools
-RUN apt-get install -y nano wget dialog net-tools software-properties-common
+RUN apt-get update && apt-get install -y nano wget dialog net-tools software-properties-common
 
 # Add application repository URL to the default sources
 RUN add-apt-repository ppa:nginx/stable
 
 # Download and Install Nginx
 RUN apt-get install -y nginx
+
+# Remove the default Nginx configuration file
+RUN rm  /etc/nginx/nginx.conf
+
+# Copy a configuration file from the current directory
+ADD nginx.conf /etc/nginx/
 
 VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/etc/nginx/conf.d", "/var/log/nginx", "/var/www/html"]
 
