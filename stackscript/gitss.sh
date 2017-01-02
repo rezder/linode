@@ -89,8 +89,10 @@ ufw enable
 
 
 # Install git sets globally user name, email and outcrlf
+# TODO do not work global is for user and system is for all
+# users this just sets it for root.
 # the last setting is handle windows and linux end of line problems.
 pacman -S --noconfirm git
-git config --global user.name  $GITUSER
-git config --global user.email $GITMAIL
-git config --globa lcore.autocrlf "input"
+#git config --global user.name  $GITUSER
+#git config --global user.email $GITMAIL
+git config --system lcore.autocrlf "input"

@@ -48,7 +48,7 @@ docker run \
 Run letsencrypt commands linking to the data and nginx container
 ```
 docker run --rm \
-  --volumes-from vnginx \
+  --volumes-from cnginx \
   --volumes-from letsencrypt-data \
   imletsencrypt \
   letsencrypt certonly \
@@ -62,10 +62,12 @@ docker run --rm \
   --agree-tos \
   --dry-run \
   -n;
-  cp /etc/letsencrypt/live/rezder.com/privkey.pem  /etc/nginx/certs; \
-  cp /etc/letsencrypt/live/rezder.com/fullchain.pem  /etc/nginx/certs; 
+  cp /etc/letsencrypt/live/rezder.com/privkey.pem  /etc/nginx/certs/rezder; \
+  cp /etc/letsencrypt/live/rezder.com/fullchain.pem  /etc/nginx/certs/rezder; 
 ```
 Remove dry-run.
+The copy was remove to script installcerts.sh
+
 
 Calculate the dhparmes.pem
 ```
@@ -136,34 +138,36 @@ listen 443 ssl http2 default_server;
 ```
 listen 443 ssl http2;
 ```
+Stop old container and start new with same volumes
+```
+docker run -d --name nginx -p 80:80 -p 443:443 --network webnet --volumes-from vgninx nginx
+```
+remove old container.
 
 ## Update certs
 The certs only last for 3 months and it is recomended to upgrade a 1 month before.
 
 ```
 docker run --rm \
-  volumes-from vnginx \
+  --volumes-from cnginx \
+  --volumes-from letsencrypt-data \
   imletsencrypt \
-  letsencrypt letsencrypt renew;
+  letsencrypt renew;
 ```
 test 
 ```
 docker run --rm \
-  volumes-from vnginx \
+  --volumes-from cnginx \
+  --volumes-from letsencrypt-data \
   imletsencrypt \
-  letsencrypt letsencrypt renew \
+  letsencrypt renew \
   --dry-run \
   --agree-tos;
 ```
-It is recommended to run renew in a batch job very day at a time
+It is recommended to run renew in a batch job every day at a time
 that everybody else does not use ex 16.17.
 It has a pre and post hook --post-hook "service nginx start"
 The post hook is only called when change have been made but it is not
 totaly clear we will see. It is properly be easier to check for change time stamp.
 
-The update certs only needs ubuntu remember docker kill --signal=HUP vnginx
-
- 
- 
- 
-
+The update certs only needs ubuntu remember docker kill --signal=HUP cnginx

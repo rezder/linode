@@ -24,7 +24,7 @@ ADD nginx.conf /etc/nginx/
 VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/etc/nginx/conf.d", "/var/log/nginx", "/var/www/html"]
 
 # Expose ports this is info only the run command open the port
-EXPOSE 80
+EXPOSE 80 443
 
 # Set the default command to execute
 # when creating a new container
