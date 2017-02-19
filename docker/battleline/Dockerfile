@@ -11,8 +11,11 @@ MAINTAINER Rene
 
 # Install Battleline
 
-# Install necessary tools
+# Install necessary standard tools
 RUN apt-get update && apt-get install -y nano wget dialog net-tools
+
+# Install zero message queue
+RUN apt-get update && apt-get zeromq
 
 # Copy a tar.gz file from the current directory
 # It is automaticly extracted by docker
