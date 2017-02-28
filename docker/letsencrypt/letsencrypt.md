@@ -40,7 +40,6 @@ Create letsencrypt data container
 docker run \
   --name letsencrypt-data \
   --volume /etc/letsencrypt \
-  --volume /var/lib/letsencrypt \
   --volume /var/log/letsencrypt \
   imletsencrypt
   
