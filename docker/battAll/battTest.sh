@@ -8,7 +8,7 @@ function conExist {
 function conIsRuning {
   isRun=$(docker inspect -f "{{.State.Running}}" $1)
   if [ $isRun != "true" ];then
-    reuturn 1
+    return 1
   fi
 }
 
@@ -100,13 +100,13 @@ if [ "$botNo" != "$limitNo" ];then
 fi 
 
 echo "Stop containers"
+sleep 1
 docker kill --signal=SIGINT "$nameBot1" || exit 1
 sleep 1
 docker kill --signal=SIGINT "$nameServer" || exit 1
 sleep 2
-docker kill --signal=SIGINT "$nameArch" || exit 1
-sleep 2
 docker kill --signal=SIGINT "$nameArch" 
+
 echo "Wait for containers to stop 2 seconds"
 sleep 2
 
@@ -138,32 +138,30 @@ if [[ "$1" != "-i" ]];then
 else
     echo "##############Install################"
     echo "Stop containers"
- 
     for con in "${conNames[@]}";do
         conExist "$con" && conIsRuning "$con" && docker kill --signal=SIGINT "$con"
-	      sleep 2
+	sleep 2
     done
 
     for con in "${conNames[@]}";do
         conExist "$con" && conIsRuning "$con" && echo "Failed to close down $con" && exit 1
     done
-
     echo "Backup"
     source ./backup.sh .
 
     # collect images name may fail if have been changed
-    declare -A imgs
+    declare -A imgs 
     for con in "${conNames[@]}";do
         if conExist "$con"; then
-            imgs[$con]="$(docker inspect -f "{{.Config.Image}}" "$con")"
+            imgs["$(docker inspect -f "{{.Config.Image}}" "$con")"]="just want unigue"
         fi
     done
     echo "Clean containers"
     for con in "${conNames[@]}";do
-        conExist "$con" && docker rm -v "$con" || exit 1
+        conExist "$con" && (docker rm -v "$con" || exit 1)
     done
     echo "Clean images"
-    for val in "${imgs[@]}";do
+    for val in "${!imgs[@]}";do
         docker rmi "$val" || exit 1 # name change of image after start may fuck this up.
     done
 
@@ -174,12 +172,17 @@ else
     docker volume inspect batthtml &>/dev/null && docker volume rm batthtml
 
     echo "Start containers"
+    echo "Start $conServerN"
     docker run -d --name "$conServerN" -v battdata:/batt/data -v batthtml:/batt/html --network webnet "$imgServerN":v${imgvs[$imgServerN]} || exit 1
     sleep 1
+    echo "Start $conBot1N"
     docker run -d --name "$conBot1N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -addr="$conServerN" -port=8181 -name=Bot1 -pw=rebot1Er || exit 1
+    echo "Start $conBot2n"
     docker run -d --name "$conBot2N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -addr="$conServerN" -port=8181 -name=Bot2 -pw=rebot2Er || exit 1
     sleep 2
+    echo "Start $conArchN"
     docker run -d --name "$conArchN" --network webnet -v archdata:/arch/data "$imgArchN":v${imgvs[$imgArchN]} \
            -client="${conServerN}:7171" -addr="$conArchN" -backupport=8282 -dbfile="data/bdb.db" || exit 1
 
 fi
+

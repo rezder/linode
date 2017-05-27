@@ -8,8 +8,6 @@
 # <UDF name="locale" label="Locale" default="en_US.UTF-8 UTF-8" />
 # <UDF name="settz" label="Set the appropriate timezone based on datacenter location?" oneof="Yes,No" default="Yes" />
 # <UDF name="hostname" label="Host name" example="This is the name of your server."/>
-# <UDF name="gituser" label="Git user name" />
-# <UDF name="gitmail" label="Git user email" />
 
 
 # Update and optimize mirrorlist for pacman
@@ -93,6 +91,4 @@ ufw enable
 # users this just sets it for root.
 # the last setting is handle windows and linux end of line problems.
 pacman -S --noconfirm git
-#git config --global user.name  $GITUSER
-#git config --global user.email $GITMAIL
 git config --system lcore.autocrlf "input"
