@@ -17,7 +17,7 @@ systemctl enable docker.service
 docker info
 
 # Add user to user group
-gpasswd -a rho docker
+gpasswd -a rho docker # something strange happen here I ended up as root
 newgrp docker
 
 
