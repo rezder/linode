@@ -74,7 +74,7 @@ docker run \
   --rm
   --volumes-from letsencrypt-data \
   ubuntu \
-  openssl dhparam -out /etc/letsencrypt/dhparams.pem 2048
+  openssl dhparam -out /etc/letsencrypt/dhparam.pem 2048
 ```
 
  I could just use nginx image with all the volumes except etc/nginx/certs

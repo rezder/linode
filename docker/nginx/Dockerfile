@@ -16,7 +16,7 @@ RUN add-apt-repository ppa:nginx/stable
 RUN apt-get install -y nginx
 
 
-VOLUME ["/etc/nginx/sites-enabled", "/etc/nginx/certs", "/etc/nginx/conf.d", "/var/log/nginx", "/var/www/html"]
+VOLUME ["/etc/nginx/sites-enabled","/etc/nginx/snippets/", "/etc/nginx/certs", "/etc/nginx/conf.d", "/var/log/nginx", "/var/www/html"]
 
 # Expose ports this is info only the run command open the port
 EXPOSE 80 443

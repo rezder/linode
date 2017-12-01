@@ -27,12 +27,13 @@ RUN apt-get purge -y libtool autoconf automake make g++ uuid-dev
 # It is automaticly extracted by docker
 RUN mkdir /batt
 WORKDIR /batt
-ADD battup.tar.gz /batt
+ADD battup.tar.gz /batt/
 
-EXPOSE 8181
+EXPOSE 8282
 
 # Volumes data logs and user and html pages
-VOLUME ["/batt/data", "/batt/html"]
+VOLUME ["/batt/server/data", "/batt/server/htmlroot"]
 
 ## Start the server
-CMD ["./battserver"]
+ENTRYPOINT ["./battserver2"]
+CMD ["-bckupport=8888","-rootdir=server/htmlroot"]

@@ -1,4 +1,5 @@
 #!/bin/bash
+#backup using volume.
 d=~/backup/
 touch ${d}battdata.tar.gz
 mv ${d}battdata.tar.gz ${d}battdata.old.tar.gz

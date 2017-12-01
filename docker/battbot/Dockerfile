@@ -28,6 +28,6 @@ WORKDIR /bot
 ADD botup.tar.gz /bot
 
 ## Start the server
-##-addr=battserver -port=8181 -name=username -pw=password
-ENTRYPOINT ["/bot/battbot"]
+##-gameurl=batt:8282 -name=username -pw=password
+ENTRYPOINT ["/bot/battbot2"]
 

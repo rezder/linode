@@ -5,6 +5,9 @@ echo "Calculate new versions"
 function conExist {
   docker inspect $1 &>/dev/null
 }
+function volumeExist {
+    docker volume inspect $1 &>/dev/null
+}
 function conIsRuning {
   isRun=$(docker inspect -f "{{.State.Running}}" $1)
   if [ $isRun != "true" ];then
@@ -73,20 +76,29 @@ cd $MYDIR
 echo "Create test net work webnettest"
 docker network inspect webnettest &>/dev/null || docker network create --driver bridge webnettest
 
+# remember to upload defaultclientsup.tar.gz with
+# /home/rho/linode/docker/battleline/uploadclients.sh
+if ! volumeExist battdatatest; then
+    echo "Create test http server data volume: battdatatest"
+    docker volume create battdatatest
+    docker run --rm -v battdatatest:/dest -v /home/rho/upload/battleline/battserver:/currdir ubuntu tar xzf /currdir/defaultclientsup.tar.gz -C /dest
+fi
+
+
 echo "Start containers"
 nameServer="${conServerN}test"
-docker run -d --name "$nameServer" -v battdatatest:/batt/data --network webnettest "$imgServerN":v${imgvs[$imgServerN]} || exit 1
+docker run -d --name "$nameServer" -v battdatatest:/batt/server/data --network webnettest "$imgServerN":v${imgvs[$imgServerN]} || exit 1
 sleep 1
 nameBot1="${conBot1N}test"
-docker run -d --name "$nameBot1" --network webnettest "$imgBotN":v${imgvs[$imgBotN]} -addr="$nameServer" -port=8181 -name=Bot1 -pw=rebot1Er || exit 1
+docker run -d --name "$nameBot1" --network webnettest "$imgBotN":v${imgvs[$imgBotN]} -gameurl="${nameServer}:8282" -name=Bot1 -pw=rebot1Er || exit 1
 nameArch="${conArchN}test"
 docker run -d --name "$nameArch" --network webnettest "$imgArchN":v${imgvs[$imgArchN]} \
-       -client="${nameServer}:7171" -addr="$nameArch" -backupport=8282 -loglevel=3 -dbfile="data/bdb.db" || exit 1
+       -client="${nameServer}:7373" -addr="$nameArch" -backupport=8282 -loglevel=3 -dbfile="data/bdb.db" || exit 1
 nameBot2="${conBot2N}test"
 limitNo=141
 echo "Starting bot to play 141 games"
 docker run --name "$nameBot2" --network webnettest "$imgBotN":v${imgvs[$imgBotN]} \
-       -addr="$nameServer" -port=8181 -name=Bot2 -pw=rebot2Er -loglevel=1 -send -limit="$limitNo" || exit 1
+       -gameurl="${nameServer}:8282" -name=Bot2 -pw=rebot2Er -loglevel=1 -send -limit="$limitNo" || exit 1
 
 echo "Verify games is played and saved"
 botNo=$(docker logs "$nameBot2" 2>&1 | grep "Number of game played" | awk '{print $7}')
@@ -97,7 +109,7 @@ fi
 if [ "$botNo" != "$limitNo" ];then
   echo "Test failed bot2 did not play $limitNo of games only $botNo"
   exit 1
-fi 
+fi
 
 echo "Stop containers"
 sleep 1
@@ -105,7 +117,7 @@ docker kill --signal=SIGINT "$nameBot1" || exit 1
 sleep 1
 docker kill --signal=SIGINT "$nameServer" || exit 1
 sleep 2
-docker kill --signal=SIGINT "$nameArch" 
+docker kill --signal=SIGINT "$nameArch"
 
 echo "Wait for containers to stop 2 seconds"
 sleep 2
@@ -150,7 +162,7 @@ else
     source ./backup.sh .
 
     # collect images name may fail if have been changed
-    declare -A imgs 
+    declare -A imgs
     for con in "${conNames[@]}";do
         if conExist "$con"; then
             imgs["$(docker inspect -f "{{.Config.Image}}" "$con")"]="just want unigue"
@@ -168,21 +180,27 @@ else
     echo "Create net work webnet if it does not exit"
     docker network inspect webnet &>/dev/null || docker network create --driver bridge webnet
 
-    echo "Remove volume batthtml"
-    docker volume inspect batthtml &>/dev/null && docker volume rm batthtml
+    if ! volumeExist battdata; then
+        echo "Create http server data volume: battdata"
+        docker volume create battdata
+        docker run --rm -v battdata:/dest -v /home/rho/upload/battleline/battserver:/currdir ubuntu tar xzf /currdir/defaultclientsup.tar.gz -C /dest
+    fi
+
+    echo "Remove http server volume batthtml"
+    volumeExist batthtml && docker volume rm batthtml
 
     echo "Start containers"
     echo "Start $conServerN"
-    docker run -d --name "$conServerN" -v battdata:/batt/data -v batthtml:/batt/html --network webnet "$imgServerN":v${imgvs[$imgServerN]} || exit 1
+    docker run -d --name "$conServerN" -v battdata:/batt/server/data -v batthtml:/batt/server/htmlroot --network webnet "$imgServerN":v${imgvs[$imgServerN]} || exit 1
     sleep 1
     echo "Start $conBot1N"
-    docker run -d --name "$conBot1N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -addr="$conServerN" -port=8181 -name=Bot1 -pw=rebot1Er || exit 1
+    docker run -d --name "$conBot1N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -gameurl="${conServerN}:8282" -name=Bot1 -pw=rebot1Er || exit 1
     echo "Start $conBot2n"
-    docker run -d --name "$conBot2N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -addr="$conServerN" -port=8181 -name=Bot2 -pw=rebot2Er || exit 1
+    docker run -d --name "$conBot2N" --network webnet "$imgBotN":v${imgvs[$imgBotN]} -gameurl="${conServerN}:8282" -name=Bot2 -pw=rebot2Er || exit 1
     sleep 2
     echo "Start $conArchN"
     docker run -d --name "$conArchN" --network webnet -v archdata:/arch/data "$imgArchN":v${imgvs[$imgArchN]} \
-           -client="${conServerN}:7171" -addr="$conArchN" -backupport=8282 -dbfile="data/bdb.db" || exit 1
+           -client="${conServerN}:7373" -addr="$conArchN" -backupport=8282 -dbfile="data/bdb.db" || exit 1
 
 fi
 
