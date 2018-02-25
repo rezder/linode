@@ -1,4 +1,10 @@
 #!/bin/bash
+
+# Warning before start upload battAll/upload.sh and 
+# move Dockerfiles to upload directories. I do not like the last part.
+# There is no fast solution because tar.gz and Docker must be together when build
+# and the tar.gz works well when compresed. Maybe include Docker file in upload
+# script but it must not be in tar.gz.
 MYDIR="$(dirname "$(realpath "$0")")"
 echo "Calculate new versions"
 
@@ -8,12 +14,18 @@ function conExist {
 function volumeExist {
     docker volume inspect $1 &>/dev/null
 }
+function imgExist {
+    docker inspect --type=image $1 &>/dev/null
+}
+
 function conIsRuning {
   isRun=$(docker inspect -f "{{.State.Running}}" $1)
   if [ $isRun != "true" ];then
     return 1
   fi
 }
+
+imgExist("battbase") || docker build -t battbase /home/rho/linode/docker/battbase
 
 declare -A imgvs
 imgServerN=imgbatt
@@ -106,6 +118,7 @@ if [[ -z $botNo ]];then
   echo "Test failed bot2 did not play any games"
   exit 1
 fi
+botNo=${botNo%,} # removes comma
 if [ "$botNo" != "$limitNo" ];then
   echo "Test failed bot2 did not play $limitNo of games only $botNo"
   exit 1
@@ -122,13 +135,13 @@ docker kill --signal=SIGINT "$nameArch"
 echo "Wait for containers to stop 2 seconds"
 sleep 2
 
-archNo=$(docker logs "$nameArch" 2>&1 | grep 'Final number of saved games' |  awk '{print $9}')
+archNo=$(docker logs "$nameArch" 2>&1 | grep 'Final number of saved game' |  awk '{print $10}')
 if [[ -z $archNo ]];then
   echo "Test failed archiver did not save $limitNo games"
   exit 1
 fi
 if [ "$archNo" != "$limitNo" ];then
-  echo "Test failed archiver did not save $limitNo games only ${archLine//[!0-9]/x}"
+  echo "Test failed archiver did not save $limitNo games only $archNo"
   exit 1
 fi
 
@@ -158,8 +171,10 @@ else
     for con in "${conNames[@]}";do
         conExist "$con" && conIsRuning "$con" && echo "Failed to close down $con" && exit 1
     done
-    echo "Backup"
-    source ./backup.sh .
+    if conExist conServerN && conExist conArchN;then
+        echo "Backup server"
+        source /home/rho/linode/docker/battAll/backupvolume.sh $conServerN $conArchN
+    fi
 
     # collect images name may fail if have been changed
     declare -A imgs

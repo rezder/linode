@@ -29,4 +29,4 @@ ADD archup.tar.gz /arch
 VOLUME ["/arch/data"] #I this create dir if it does not exist
 ## Start the server
 ## battarchiver2 -client="batt:7373" -addr="arch" -backupport="8282" -dbfile="/arch/data/bdb.db"
-ENTRYPOINT ["./battarchiver"]
+ENTRYPOINT ["./battarchiver2"]

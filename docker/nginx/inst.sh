@@ -6,7 +6,8 @@ docker run -d --name nginx -p 80:80 --network webnet imgnginx
 # Install pre cert pages and letsencrypt.conf snippet.
 docker run --rm --volumes-from nginx ubuntu rm /etc/nginx/sites-enabled/default;
 
-docker run --rm --volumes-from nginx -v /home/rho/linode/docker/nginx/rezder:/currdir ubuntu cp -r /currdir/html/rezder /var/www/html/;
+docker run --rm --volumes-from nginx -v /home/rho/linode/docker/letsencrypt:/currdir ubuntu cp  /currdir/letsencrypt.conf /etc/nginx/snippets/;
+docker run --rm --volumes-from nginx ubuntu mkdir -p /var/www/html/letsencrypt/.well-known/acme-challenge;
 
 docker run --rm --volumes-from nginx -v /home/rho/linode/docker/nginx/rezder:/currdir ubuntu cp -r /currdir/html/rezder /var/www/html/;
 docker run --rm --volumes-from nginx -v /home/rho/linode/docker/nginx/rezder:/currdir ubuntu cp /currdir/rezderpre.conf /etc/nginx/sites-enabled/rezder.conf;
@@ -14,7 +15,7 @@ docker run --rm --volumes-from nginx -v /home/rho/linode/docker/nginx/rezder:/cu
 docker run --rm --volumes-from nginx -v /home/rho/linode/docker/battleline/nginx:/currdir ubuntu cp -r /currdir/html/battleline /var/www/html/;
 docker run --rm --volumes-from nginx -v /home/rho/linode/docker/battleline/nginx:/currdir ubuntu cp /currdir/battlelinepre.conf /etc/nginx/sites-enabled/battleline/conf;
 
-docker kill --signal=HUP cnginx
+docker kill --signal=HUP nginx
 
 cd ~/linode/docker/letsencrypt
 docker build -t imgletsencrypt .
@@ -26,24 +27,29 @@ docker run --rm \
        imgletsencrypt \
        letsencrypt certonly \
        --webroot \
-       -w /var/www/html/rezder \
+       -w /var/www/html/letsencrypt \
        -d rezder.com \
        -d www.rezder.com \
-       -w /var/www/html/battleline \
+       -w /var/www/html/letsencrypt \
        -d battleline.rezder.com \
        -m wwwrene@runbox.com \
        --agree-tos \
        --dry-run \
        -n;
-## Warning remove dry-run
+# Warning remove dry-run
 
-## Copy letsencrypt certs and dh certs rember to upload dhparam.pem from rho/dhparams/dhparam.pem
+# remember to upload dhparam.pem from rho/dhparams/dhparam.pem
+cd ~/upload/nginx/dhparams/
+## Copy letsencrypt certs and dh certs.
+docker run --rm --volumes-from nginx ubuntu mkdir -p /etc/nginx/certs/rezder;
+docker run --rm --volumes-from nginx ubuntu mkdir /etc/nginx/certs/dh;
 docker run --rm \
        --volumes-from nginx \
        --volumes-from letsencrypt-data \
        -v $(pwd):/currdir \
        ubuntu \
-       "cp /etc/letsencrypt/live/rezder.com/privkey.pem  /etc/nginx/certs/rezder; cp /etc/letsencrypt/live/rezder.com/fullchain.pem  /etc/nginx/certs/rezder; cp /currdir/dhparam.pem etc/nginx/certs/dh/;"
+       /bin/bash -c \
+       "cp /etc/letsencrypt/live/rezder.com/privkey.pem  /etc/nginx/certs/rezder; cp /etc/letsencrypt/live/rezder.com/fullchain.pem  /etc/nginx/certs/rezder; cp /currdir/dhparam.pem etc/nginx/certs/dh;"
 
 docker stop nginx
 ## Start with new ports
@@ -53,5 +59,3 @@ docker run --rm --volumes-from cnginx -v /home/rho/linode/docker/nginx:/currdir 
 ## Install (www).rezder.com
 docker run --rm --volumes-from cnginx -v /home/rho/linode/docker/nginx/rezder:/currdir ubuntu cp /currdir/rezderpost.conf /etc/nginx/sites-enabled/rezder.conf;
 ### setup battleline.rezder.com
-docker run --rm --volumes-from nginx -v /home/rho/linode/docker/battleline/nginx:/currdir ubuntu cp /currdir/battlelinepost.conf /etc/nginx/sites-enabled/battleline.conf;
-docker kill --signal=HUP cnginx
